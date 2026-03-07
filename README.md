@@ -11,3 +11,6 @@ First Step
 
 Second Step
 pip install -r requirement.txt
+
+
+DATA : https://www.kaggle.com/datasets/moyukhbiswas/job-postings-dataset/data
