@@ -1,11 +1,312 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Job Recommendation System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 32px;
+      color: #1f2d3d;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 56px;
+      margin-bottom: 8px;
+      color: #1f2d3d;
+    }
+
+    .subtitle {
+      margin-bottom: 28px;
+      font-size: 22px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 20px;
+    }
+
+    input,
+    select,
+    button,
+    textarea {
+      width: 100%;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid #d9d9d9;
+      font-size: 18px;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: auto;
+      background: white;
+      cursor: pointer;
+      padding: 14px 24px;
+      border: 1px solid #bdbdbd;
+      margin-top: 8px;
+    }
+
+    button:hover {
+      background: #f0f0f0;
+    }
+
+    .result-box {
+      margin-top: 24px;
+      padding: 18px;
+      border-radius: 10px;
+      font-size: 22px;
+    }
+
+    .success {
+      background: #dff0e3;
+      color: #2f6f3e;
+    }
+
+    .info {
+      background: #dfeeff;
+      color: #245ea8;
+      font-size: 20px;
+      line-height: 1.6;
+    }
+
+    .warning {
+      background: #fff4d6;
+      color: #8a6d1d;
+      font-size: 18px;
+    }
+
+    .error {
+      background: #ffe0e0;
+      color: #b30000;
+    }
+
+    .section-title {
+      margin-top: 28px;
+      margin-bottom: 12px;
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    .top-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .top-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+
+    .top-rank {
+      font-size: 15px;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+
+    .top-job {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .top-score {
+      font-size: 18px;
+      color: #245ea8;
+    }
+
+    details {
+      margin-top: 18px;
+      background: white;
+      border: 1px solid #d9d9d9;
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 16px;
+      line-height: 1.5;
+      margin-top: 14px;
+    }
+
+    .loading {
+      margin-top: 16px;
+      font-size: 18px;
+      color: #444;
+    }
+  </style>
 </head>
 <body>
-    
+  <div class="container">
+    <h1>AI Job Recommendation System</h1>
+    <div class="subtitle">กรอกข้อมูลเพื่อให้ระบบแนะนำอาชีพที่เหมาะสม</div>
+
+    <div class="form-group">
+      <label for="workplace">Workplace</label>
+      <select id="workplace">
+        <option value="remote">remote</option>
+        <option value="onsite">onsite</option>
+        <option value="hybrid">hybrid</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="location">Location</label>
+      <input id="location" type="text" value="bangkok thailand" />
+    </div>
+
+    <div class="form-group">
+      <label for="department">Department</label>
+      <input id="department" type="text" value="analytics" />
+    </div>
+
+    <div class="form-group">
+      <label for="job_type">Job Type</label>
+      <select id="job_type">
+        <option value="full_time">full_time</option>
+        <option value="part_time">part_time</option>
+        <option value="contract">contract</option>
+        <option value="internship">internship</option>
+      </select>
+    </div>
+
+    <button onclick="recommendJob()">Recommend Job</button>
+
+    <div id="loading" class="loading" style="display:none;">กำลังประมวลผล...</div>
+
+    <div id="result" style="display:none;"></div>
+    <div id="reason" style="display:none;"></div>
+    <div id="ruleBox" style="display:none;"></div>
+
+    <div id="topPredictionsSection" style="display:none;">
+      <div class="section-title">Top 3 Recommendations</div>
+      <div id="topPredictions" class="top-list"></div>
+    </div>
+
+    <details>
+      <summary>Model Input Text</summary>
+      <pre id="modelInputText">-</pre>
+    </details>
+
+    <details>
+      <summary>Raw Model Prediction</summary>
+      <pre id="rawPrediction">-</pre>
+    </details>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:8000/predict";;
+
+    async function recommendJob() {
+      const workplace = document.getElementById("workplace").value;
+      const location = document.getElementById("location").value.trim();
+      const department = document.getElementById("department").value.trim();
+      const job_type = document.getElementById("job_type").value;
+
+      const loading = document.getElementById("loading");
+      const result = document.getElementById("result");
+      const reason = document.getElementById("reason");
+      const ruleBox = document.getElementById("ruleBox");
+      const modelInputText = document.getElementById("modelInputText");
+      const rawPrediction = document.getElementById("rawPrediction");
+      const topPredictions = document.getElementById("topPredictions");
+      const topPredictionsSection = document.getElementById("topPredictionsSection");
+
+      result.style.display = "none";
+      reason.style.display = "none";
+      ruleBox.style.display = "none";
+      topPredictionsSection.style.display = "none";
+      loading.style.display = "block";
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            workplace,
+            location,
+            department,
+            job_type
+          })
+        });
+
+        const data = await response.json();
+        loading.style.display = "none";
+
+        if (!response.ok) {
+          throw new Error(data.detail || "Request failed");
+        }
+
+        result.className = "result-box success";
+        result.innerHTML = `<strong>Recommended Job:</strong> ${data.recommended_job}`;
+        result.style.display = "block";
+
+        reason.className = "result-box info";
+        reason.textContent = data.reason;
+        reason.style.display = "block";
+
+        if (data.rule_applied) {
+          ruleBox.className = "result-box warning";
+          ruleBox.innerHTML = `<strong>Business Rule Applied:</strong> ${data.applied_rule}`;
+          ruleBox.style.display = "block";
+        }
+
+        modelInputText.textContent = data.model_input_text || "-";
+        rawPrediction.textContent = data.raw_model_prediction || "-";
+
+        if (data.top_predictions && data.top_predictions.length > 0) {
+          topPredictions.innerHTML = "";
+
+          data.top_predictions.forEach((item, index) => {
+            const scorePercent = (item.score * 100).toFixed(2);
+
+            const card = document.createElement("div");
+            card.className = "top-card";
+            card.innerHTML = `
+              <div class="top-rank">Rank ${index + 1}</div>
+              <div class="top-job">${item.job}</div>
+              <div class="top-score">Score: ${scorePercent}%</div>
+            `;
+            topPredictions.appendChild(card);
+          });
+
+          topPredictionsSection.style.display = "block";
+        }
+
+      } catch (error) {
+        loading.style.display = "none";
+        result.className = "result-box error";
+        result.textContent = "เกิดข้อผิดพลาด: " + error.message;
+        result.style.display = "block";
+      }
+    }
+  </script>
 </body>
 </html>
