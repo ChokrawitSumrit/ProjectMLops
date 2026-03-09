@@ -1,15 +1,12 @@
 # ProjectMLops
 
-# How to run
-1. pip install -r requirement.txt
-2. open : docker compose up --build
+How to run
+1. .venv\Scripts\activate
+2. pip install -r requirement.txt
+3. open : docker compose up --build
 close : docker compose down
 
-# run backend
+run backend
 uvicorn backend.main:app --reload
 
-# run frontend
-streamlit run frontend/app.py
 
-# run frontend
-streamlit run app.py
