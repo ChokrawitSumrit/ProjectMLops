@@ -11,3 +11,4 @@ run backend
 uvicorn backend.main:app --reload
 
 
+web: http://34.21.147.39:8080/
